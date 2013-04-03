@@ -8,6 +8,7 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Random;
+import java.util.concurrent.CountDownLatch;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -76,6 +77,9 @@ public class testTexture3D extends Activity
 	private ArrayList<PointPower> pointPowers;
 	private float lastX, lastY;
 	
+	boolean canRange = false;
+	boolean canDo = false;
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -102,6 +106,14 @@ public class testTexture3D extends Activity
 	public boolean onTouchEvent(MotionEvent me)
 	{
 		// 将该Activity上的触碰事件交给GestureDetector处理
+		switch (me.getAction()) {
+		case MotionEvent.ACTION_DOWN:
+			canDo = true;
+			break;
+
+		default:
+			break;
+		}
 		return true;
 		//return detector.onTouchEvent(me);
 	}
@@ -109,6 +121,8 @@ public class testTexture3D extends Activity
 	public class MyRenderer implements Renderer {
 	    // Points 网格顶点数组(45,45,3)
 	    float vertex[][][] = new float[45][45][3];
+	    float[] range = new float[45];
+	    
 	    // 指定旗形波浪的运动速度
 	    int wiggle_count = 0;
 	    // 临时变量
@@ -125,6 +139,10 @@ public class testTexture3D extends Activity
 	    private FloatBuffer coordBuffer;
 	    // textures
 	    private int[] textures = new int[1];
+	    
+	    private float rangeAdd = 0.1f;
+	    private int count = 0;
+	    private int curTop = -1;
 
 	    // init()
 	    public void init() {
@@ -153,7 +171,7 @@ public class testTexture3D extends Activity
 	        gl.glLoadIdentity(); // 重置当前的模型观察矩阵
 
 	        gl.glTranslatef(0.0f, 0.0f, -12.0f); // 移入屏幕12个单位
-	        gl.glScalef(2f, 1f, 1f);
+	        gl.glScalef(1f, 0.5f, 1f);
 //	        gl.glRotatef(xrot, 1.0f, 0.0f, 0.0f); // 绕 X 轴旋转
 //	        gl.glRotatef(yrot, 0.0f, 1.0f, 0.0f); // 绕 Y 轴旋转
 //	        gl.glRotatef(zrot, 0.0f, 0.0f, 1.0f); // 绕 Z 轴旋转
@@ -164,6 +182,8 @@ public class testTexture3D extends Activity
 	        gl.glVertexPointer(3, GL10.GL_FLOAT, 0, vertexBuffer);
 	        gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, coordBuffer);
 
+	        
+	        
 	        for (x = 0; x < 44; x++) {
 	            for (y = 0; y < 44; y++) {
 	                _x = (float) (x) / 44.0f; // 生成X浮点值
@@ -206,22 +226,69 @@ public class testTexture3D extends Activity
 	                gl.glDrawArrays(GL10.GL_TRIANGLE_FAN, 0, 4);
 	            }
 	        } 
+	        
 	        gl.glDisableClientState(GL10.GL_TEXTURE_COORD_ARRAY);
 	        gl.glDisableClientState(GL10.GL_VERTEX_ARRAY);
 
+	        if(canDo && curTop % 5 == 0) {
+	        	canRange = true;
+	        	canDo = false;
+	        }
+	        if(canRange) {
+	        	count++;
+	        	if(count == 5) { 
+	        		canRange = false;
+	        		count = 0;
+	        	}
+	        	for(int j = 0; j < 45; j++) {
+	        		if(curTop / 5 == 0) {
+		        		vertex[26][j][1] = ((float) j / 5.0f) - 4.5f + 1f * (float) (Math
+		                        .sin(((((float) (2 * (count - 1) + 1) / 5.0f) * 30.0f * 3f) / 360.0f) * 3.141592654 * 2.0f));
+		        		vertex[25][j][1] = ((float) j / 5.0f) - 4.5f + 1f * (float) (Math
+		                        .sin(((((float) 2 * (count - 1) / 5.0f) * 30.0f * 3f) / 360.0f) * 3.141592654 * 2.0f));
+	        	
+	        		} else {
+	        			vertex[26][j][1] = ((float) j / 5.0f) - 4.5f + 1f * (float) (Math
+	        					.sin(((((float) (2 * (count - 1) + 1) / 5.0f) * 30.0f * 3f + 180) / 360.0f) * 3.141592654 * 2.0f));
+	        			vertex[25][j][1] = ((float) j / 5.0f) - 4.5f + 1f * (float) (Math
+	        					.sin(((((float) 2 * (count - 1) / 5.0f) * 30.0f * 3f + 180) / 360.0f) * 3.141592654 * 2.0f));
+	        			
+	        		}
+	        
+	        	}
+//	        	if(count == 0) {
+//	        		if(curTop / 5 == 0) {
+//	        			for(int j = 0; j < 45; j++) {
+//	        				vertex[25][j][1] = ((float) j / 5.0f) - 4.5f + 1f * (float) (Math
+//	        						.sin(((((float) 10f / 5.0f) * 30.0f * 3f) / 360.0f) * 3.141592654 * 2.0f));
+//	        			}
+//	        		} else {
+//	        			for(int j = 0; j < 45; j++) {
+//	        				vertex[25][j][1] = ((float) j / 5.0f) - 4.5f + 1f * (float) (Math
+//	        						.sin(((((float) 10f / 5.0f) * 30.0f * 3f + 180) / 360.0f) * 3.141592654 * 2.0f));
+//	        			}
+//	        		}
+//	        	}
+	        	Log.i("tttt", "curTop=" + curTop + "  " + vertex[26][0][1] + "  " + vertex[25][0][1]);
+	        }      
 	        if (wiggle_count == 1) { // 用来降低波浪速度(每隔2帧一次)
 	            for (int j = 0; j < 45; j++) {
 	                hold = vertex[0][j][1]; // 存储当前左侧波浪值
 	                hold1 = vertex[1][j][1]; // 存储当前左侧波浪值
-	                for (int i = 0; i < 43; i++) {
+	                for (int i = 0; i < 40; i++) {
 	                    // 当前波浪值等于其右侧的波浪值
 	                    vertex[i][j][1] = vertex[i + 2][j][1];
 	                }
-	                vertex[43][j][1] = hold;
-	                vertex[44][j][1] = hold1;
+	                vertex[38][j][1] = hold;
+	                vertex[39][j][1] = hold1;
 	            }
 	            wiggle_count=0;
 	        } 
+	        curTop++;
+	        if(curTop == 10) {
+	        	curTop = 0;
+	        }
+//	        Log.i("tttt", "curTop=" + curTop + "  vertex[0][0][1]=" + vertex[0][0][1]);
 	        wiggle_count++;
 	        xrot += 0.3f; // X 轴旋转
 	        yrot += 0.2f; // Y 轴旋转
@@ -289,11 +356,20 @@ public class testTexture3D extends Activity
 	                // 0-2*pai
 //	                vertex[x][y][1] = (float) (Math
 //	                        .sin(((((float) x / 5.0f) * 40.0f) / 360.0f) * 3.141592654 * 2.0f));
-	                vertex[x][y][1] = ((float) y / 5.0f) - 4.5f +  0.5f * (float) (Math
-	                        .sin(((((float) x / 5.0f) * 40.0f * 3f) / 360.0f) * 3.141592654 * 2.0f));
+	                vertex[x][y][1] = ((float) y / 5.0f) - 4.5f + 1.5f * (float) (Math
+	                        .sin(((((float) x / 5.0f) * 30.0f * 3f) / 360.0f) * 3.141592654 * 2.0f));
 	            }
 	        } 
 	    }
+//	    public void func() {
+//	    	for (int x = 0; x < 45; x++) {
+//	    		// 沿Y平面循环
+//	    		for (int y = 0; y < 45; y++) {
+//	    			vertex[x][y][1] = ((float) y / 5.0f) - 4.5f + 1.5f * (float) (Math
+//	    					.sin(((((float) x / 5.0f) * 30.0f * 3f) / 360.0f) * 3.141592654 * 2.0f));
+//	    		}
+//	    	} 
+//	    }
 	}
 }
 class LoadImage {
