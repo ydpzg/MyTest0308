@@ -143,6 +143,7 @@ public class testTexture3D extends Activity
 	    private float rangeAdd = 0.1f;
 	    private int count = 0;
 	    private int curTop = -1;
+	    
 
 	    // init()
 	    public void init() {
