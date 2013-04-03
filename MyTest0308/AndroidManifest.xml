@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.example.mytest0308.testTexture3D"
+            android:name="com.example.mytest0308.CopyOfCopyOftestTexture3D"
             android:theme="@android:style/Theme.NoTitleBar.Fullscreen"  
             android:label="@string/app_name" >
             <intent-filter>

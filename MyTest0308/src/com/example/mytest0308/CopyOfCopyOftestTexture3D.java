@@ -90,7 +90,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	        	accelerationX = (0.05F * paramSensorEvent.values[0] + 0.95F * accelerationX);
 	        	accelerationY = (0.05F * paramSensorEvent.values[1] + 0.95F * accelerationY);
 	        	curTime = System.currentTimeMillis();
-	        	if(Math.abs(accelerationX - acceLastX) > 0.15f) {
+	        	if(Math.abs(accelerationX - acceLastX) > 0.1f) {
 	        		float temp = Math.abs(accelerationX - acceLastX) / (curTime - lastTime) * 50f;
 	        		if(temp > 1) {
 	        			temp = 1;
@@ -122,9 +122,9 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	        		beer.setShakeFlag(bool);
 	        	}
 	        	currentAngle = (3.5F + (float)(57.295780000000001D * StrictMath.atan2(beer.getAccelY(), beer.getAccelX()) - 90.0D));
-	        	Log.i("test", "acceleX=" + accelerationX + "  acceleY=" + accelerationY + "   DiffX=" + accelDiffX + "  DiffY=" + accelDiffY);
+//	        	Log.i("test", "acceleX=" + accelerationX + "  acceleY=" + accelerationY + "   DiffX=" + accelDiffX + "  DiffY=" + accelDiffY);
 //	        	Log.i("test", "accelDiffX=" + accelDiffX + "  accelDiffY=" + accelDiffY);
-//	        	Log.i("test", "" + currentAngle);
+	        	Log.i("test", "" + currentAngle);
 	        }
 	    };
 	      
@@ -397,7 +397,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			//-------------------------------------------------------------------------
 			gl.glTranslatef(0f, 1f, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
-			gl.glScalef(2f, 1f, 1f);
+			gl.glRotatef(currentAngle, 0f, 0f, 1f);
+			gl.glScalef(5f, 1f, 1f);
 //			if(beer.getAccelY() < 10.0f) {
 //				gl.glRotatef(-beer.getAccelX() * 6.5f, 0, 0, 1);
 ////				Log.i("aaa", beer.getAccelY() + "");
@@ -497,7 +498,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 					canMove[inx] = false;
 					return ;
 				}
-				range[inx] *= 0.6f;
+				range[inx] *= 0.7f;
 			}
 			if(j / 10 == 0) {
 				cube3VerticesBuffer.put(inx * 2 * 3 + 1, 1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
@@ -532,8 +533,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 							if(range[powerWavesList.get(i).inx] < 0) {
 								range[powerWavesList.get(i).inx] = -range[powerWavesList.get(i).inx];
 							}
-							if(range[powerWavesList.get(i).inx] < 0.3f) {
-								range[powerWavesList.get(i).inx] = 0.3f;
+							if(range[powerWavesList.get(i).inx] < 0.6f) {
+								range[powerWavesList.get(i).inx] = 0.6f;
 							}
 						}
 						powerWavesList.get(i).inx--;
