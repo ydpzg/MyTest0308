@@ -59,6 +59,10 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	private boolean downHand = false;
 	private float acceLastX, acceLastY;
 	private float tempRange = 0;
+	
+	private float currentBeerHeight = 2;
+	
+	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
 	{
@@ -264,6 +268,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		private int inx = 0;
 		private ArrayList<PowerWave> powerWavesList = new ArrayList<PowerWave>();
 		
+		private boolean firstDraw = true;
+		
 		public MyRenderer(Context main)
 		{
 			this.context = main;
@@ -321,6 +327,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			//泡泡
 			bubbleVerticesBuffer = BufferIntUtil.getToFloatBuffer(bubbleVertices);
 			bubbleTexturesBuffer = BufferIntUtil.getToFloatBuffer(bubbleTextures);
+			
+			
 		}
 
 		@Override
@@ -352,6 +360,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		    // Smooth shading   
 		    gl.glShadeModel(GL10.GL_SMOOTH);  
 
+		    
 
 		}
 
@@ -366,6 +375,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glLoadIdentity();
 			// 计算透视视窗的宽度、高度比
 			ratio = (float) width / height;
+			
 			// 调用此方法设置透视视窗的空间大小。
 			gl.glFrustumf(-ratio, ratio, -1, 1, 1, 10);
 		}
@@ -375,6 +385,9 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		private float p = 3.0f;
 		public void onDrawFrame(GL10 gl)
 		{
+			if(Math.abs(beer.getAccelX()) > 6) {
+				currentBeerHeight -= 0.02;
+			}
 			// 清除屏幕缓存和深度缓存
 			gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
 			
@@ -415,7 +428,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glPushMatrix();
 			gl.glTranslatef(0f, 0f, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
-			gl.glScalef(ratio * 3, 3f, 1f);
+			gl.glScalef(ratio * 5, 5f, 1f);
 //			gl.glScalef(ratio, 1f, 1f);
 			changeSlimeVertives();
 			// 设置顶点的位置数据
@@ -435,10 +448,10 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glPopMatrix();
 			//--------------------------前景波浪-----------------------------------------------
 			gl.glPushMatrix();
-			gl.glTranslatef(0f, 0f, -0.0f);
+			gl.glTranslatef(0f, 0f + currentBeerHeight, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
 			gl.glRotatef(currentAngle, 0f, 0f, 1f);
-			gl.glScalef(5f, 1f, 1f);
+			gl.glScalef(6f, 1f, 1f);
 
 			freshWave();
 			if(downHand) {
@@ -492,11 +505,11 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				slimeTexturesBuffer.put(2 * 2 * i + 1, 1 - 0);				//y
 				
 				slimeVerticesBuffer.put(3 * (2 * i + 1), i * 2f / (45 - 1) - 1f);
-				slimeVerticesBuffer.put(3 * (2 * i + 1) + 1, (float)(-1f + 1 - tanAngle + (x + 1) * tanAngle));
+				slimeVerticesBuffer.put(3 * (2 * i + 1) + 1, (float)(-1f + 1 - tanAngle + (x + 1) * tanAngle) + currentBeerHeight / 10f * 2f);
 				slimeVerticesBuffer.put(3 * (2 * i + 1) + 2, 0f);
 				
 				slimeTexturesBuffer.put(2 * (2 * i + 1), i * 1f / (45 - 1));
-				slimeTexturesBuffer.put(2 * (2 * i + 1) + 1, 1 - (1 - (float)((1 - tanAngle) / 2.0 + x2 * tanAngle)));
+				slimeTexturesBuffer.put(2 * (2 * i + 1) + 1, 1 - (1 - (float)((1 - tanAngle) / 2.0 + x2 * tanAngle)) + currentBeerHeight / 10f * 1f);
 			}
 		}
 		
