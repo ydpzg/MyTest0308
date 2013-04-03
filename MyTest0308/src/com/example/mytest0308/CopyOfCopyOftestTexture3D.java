@@ -211,6 +211,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 
 	public class MyRenderer implements Renderer
 	{
+		float ratio;
 		private float[] cube1Vertices = { 
 				1f, 1f, 0f,
 				1f, -1f, 0f,
@@ -225,6 +226,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		};
 		private float[] foamVertices = new float[45 * 2 * 3];
 		private float[] foamTextures = new float[45 * 2 * 2];
+		private float[] slimeVertices = new float[45 * 2 * 3];
+		private float[] slimeTextures = new float[45 * 2 * 2];
 		private float[] bubbleVertices = { 
 				0.1f, 0.1f, 0f,
 				0.1f, -0.1f, 0f,
@@ -248,9 +251,11 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				
 		};
 		private Context context;
-		private FloatBuffer cubeVerticesBuffer, cube2VerticesBuffer, foamVerticesBuffer, bubbleVerticesBuffer;
+		private FloatBuffer cubeVerticesBuffer, cube2VerticesBuffer, foamVerticesBuffer, slimeVerticesBuffer,
+			bubbleVerticesBuffer;
 		private ByteBuffer cubeFacetsBuffer;
-		private FloatBuffer cubeTexturesBuffer, cube2TexturesBuffer, foamTexturesBuffer, bubbleTexturesBuffer;
+		private FloatBuffer cubeTexturesBuffer, cube2TexturesBuffer, foamTexturesBuffer, slimeTexturesBuffer,
+			bubbleTexturesBuffer;
 		// 定义本程序所使用的纹理
 		private int texture;
 		private int[] angleInt = new int[45];
@@ -269,8 +274,12 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			// 将立方体的纹理贴图的座标数据包装成FloatBuffer
 			cubeTexturesBuffer = BufferIntUtil.getToFloatBuffer(cube1Textures);
 			
+			//前景波浪
 			foamVerticesBuffer = BufferIntUtil.getToFloatBuffer(foamVertices);
 			foamTexturesBuffer = BufferIntUtil.getToFloatBuffer(foamTextures);
+			//背景泡沫
+			slimeVerticesBuffer = BufferIntUtil.getToFloatBuffer(slimeVertices);
+			slimeTexturesBuffer = BufferIntUtil.getToFloatBuffer(slimeTextures);
 			
 			for(int i = 0;i < 45;i++) {
 				foamVerticesBuffer.put(3 * 2 * i, i * 2f / (45 - 1) - 1f);
@@ -286,6 +295,21 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				
 				foamTexturesBuffer.put(2 * (2 * i + 1), i * 1f / (45 - 1));
 				foamTexturesBuffer.put(2 * (2 * i + 1) + 1, 1f);
+			}
+			for(int i = 0;i < 45;i++) {
+				slimeVerticesBuffer.put(3 * 2 * i, i * 2f / (45 - 1) - 1f); //x
+				slimeVerticesBuffer.put(3 * 2 * i + 1, 1f);					//y
+				slimeVerticesBuffer.put(3 * 2 * i + 2, 0f);					//z
+				
+				slimeTexturesBuffer.put(2 * 2 * i, i * 1f / (45 - 1));		//x
+				slimeTexturesBuffer.put(2 * 2 * i + 1, 1 - 0f);				//y
+				
+				slimeVerticesBuffer.put(3 * (2 * i + 1), i * 2f / (45 - 1) - 1f);
+				slimeVerticesBuffer.put(3 * (2 * i + 1) + 1, -1f);
+				slimeVerticesBuffer.put(3 * (2 * i + 1) + 2, 0f);
+				
+				slimeTexturesBuffer.put(2 * (2 * i + 1), i * 1f / (45 - 1));
+				slimeTexturesBuffer.put(2 * (2 * i + 1) + 1, 1 - 1f);
 			}
 			for(int i = 0;i < 45;i++){
 				angleInt[i] = 0;
@@ -341,7 +365,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			// 初始化单位矩阵
 			gl.glLoadIdentity();
 			// 计算透视视窗的宽度、高度比
-			float ratio = (float) width / height;
+			ratio = (float) width / height;
 			// 调用此方法设置透视视窗的空间大小。
 			gl.glFrustumf(-ratio, ratio, -1, 1, 1, 10);
 		}
@@ -364,19 +388,19 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glEnable(GL10.GL_BLEND); 
 //			gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA);  
 	        
-			// --------------------绘制第一个图形---------------------
+			// --------------------绘制前先把视角往屏幕里推---------------------
 			gl.glLoadIdentity();
 			// 把绘图中心移入屏幕2个单位
 			gl.glTranslatef(0f, 0.0f, -3.0f);
-			//--------------------------------------------------------------------
+			//------------------------啤酒背景---------------------------------------
 			gl.glPushMatrix();
-			gl.glTranslatef(0f, -1.0f, -0.0f);
+			gl.glTranslatef(0f, 0f, 0f);
 //			gl.glColor4f(0f, 0f, 1f, 1f);
 			// 设置顶点的位置数据
 			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, cube2VerticesBuffer);
 			// 设置贴图的的座标数据
 //			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, cube2TexturesBuffer);
-//			gl.glScalef(2f, 2f, 1f);
+			gl.glScalef(ratio * 3f, 3f, 1f);
 			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, cubeTexturesBuffer);
 			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[1]);
 			// 执行纹理贴图
@@ -384,77 +408,45 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			// 按cubeFacetsBuffer指定的面绘制三角形
 //						gl.glDrawElements(GL10.GL_TRIANGLE_STRIP, 4,
 //							GL10.GL_UNSIGNED_BYTE, cubeFacetsBuffer);
-//			gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+			gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
 			
-			//----------------------------------------------------------------------
 			gl.glPopMatrix();
-			//画泡泡
+			//--------------------------背景泡沫-----------------------------------------------
+			gl.glPushMatrix();
+			gl.glTranslatef(0f, 0f, -0.0f);
+			gl.glColor4f(1f, 1f, 1f, 0f);
+			gl.glScalef(ratio * 3, 3f, 1f);
+//			gl.glScalef(ratio, 1f, 1f);
+			changeSlimeVertives();
+			// 设置顶点的位置数据
+			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, slimeVerticesBuffer);
+			// 执行纹理贴图
+			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, slimeTexturesBuffer);
+			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+			
+			gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 45 * 2);
+			gl.glPopMatrix();
+			//----------------------------泡泡----------------------------------------
+			gl.glPushMatrix();
 //			for(int i = 0;i < 8;i ++) {
 //				bubbles[i].draw(gl);
 //				bubbles[i].move();
 //			}
-			
-			//-------------------------------------------------------------------------
-			gl.glTranslatef(0f, 1f, -0.0f);
+			gl.glPopMatrix();
+			//--------------------------前景波浪-----------------------------------------------
+			gl.glPushMatrix();
+			gl.glTranslatef(0f, 0f, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
 			gl.glRotatef(currentAngle, 0f, 0f, 1f);
 			gl.glScalef(5f, 1f, 1f);
-//			if(beer.getAccelY() < 10.0f) {
-//				gl.glRotatef(-beer.getAccelX() * 6.5f, 0, 0, 1);
-////				Log.i("aaa", beer.getAccelY() + "");
-//			} else {
-//				gl.glRotatef(0, 0, 0, 1);
-//			}
-//			test(0, ppp);
-//			test(2, ppp);
-//			test(4, ppp);
+
 			freshWave();
 			if(downHand) {
 				downHand = false;
 				putAWaveSor(44, tempRange);
 			}
-//			for(int i = 0;i < 45;i += 1) {
-////				test(i, 10f * (float)Math.sin((i + ppp) * 90 / 5.0 * Math.PI / 180.0) );
-////				if(ppp - i > 10 && ppp - i < 20) {
-////					test(i, 10f * (float)Math.sin((ppp - i) * 90 / 5.0 * Math.PI / 180.0) );
-////				} else {
-////					test(i, -1f );
-////				}
-//				if(ppp >= 10 && ppp <= 20) {
-//					if(i >= 22 && i <= 22 + 10) {
-//						test(i, (5 - Math.abs(15 - ppp)) / 5f * 10f * (float)Math.sin((i - 22) * 90 / 5.0 * Math.PI / 180.0) );
-//					} else {
-//						test(i, -1f);
-//					}
-//				} else if(ppp > 20 && ppp <= 30) {
-//					if(i >= 22 && i <= 22 + 10) {
-//						test(i, -(5 - Math.abs(25 - ppp)) / 5f * 10f* (float)Math.sin((i - 22) * 90 / 5.0 * Math.PI / 180.0) );
-//					} else if(i >= 12 && i <= 12 + 10) {
-//						test(i, (5 - Math.abs(25 - ppp)) / 5f * 10f* (float)Math.sin((i - 12) * 90 / 5.0 * Math.PI / 180.0) );
-//					} else if(i > 32 && i <= 32 + 10) {
-//						test(i, (5 - Math.abs(25 - ppp)) / 5f * 10f* (float)Math.sin((i - 32) * 90 / 5.0 * Math.PI / 180.0) );
-//					} else {
-//						test(i, -1f);
-//					}
-//				} else {
-//					test(i, -1f);
-//				}
-//			}
-			ppp += 1;
-			if(ppp == 100) {
-				pppAdd = -1;
-				ppp = 0;
-			} else if(ppp == 0) {
-				pppAdd = 1;
-				
-			}
 			// 设置顶点的位置数据
 			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, foamVerticesBuffer);
-			// 设置贴图的的座标数据
-//			gl.glScalef(3f, 1f, 1f);
-			// 旋转图形
-			
-//			gl.glScalef(1f, xx, 1f);
 			// 执行纹理贴图
 			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, foamTexturesBuffer);
 			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[(int)(p + 0.5f)]);
@@ -463,9 +455,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 //			gl.glDrawElements(GL10.GL_TRIANGLE_STRIP, 4,
 //				GL10.GL_UNSIGNED_BYTE, cubeFacetsBuffer);
 			gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 45 * 2);
-			
-			
-			
+			gl.glPopMatrix();
+			//-----------------------------------------------------------------
 			// 绘制结束
 			gl.glFinish();
 			// 禁用顶点、纹理座标数组
@@ -487,8 +478,29 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			}
 			p += incP;
 		}
-		int ppp = 20;
-		int pppAdd = 1;
+		public void changeSlimeVertives() {
+			float x, y, x2, y2;
+			double tanAngle = Math.tan(currentAngle * Math.PI / 180f) * ratio;
+			for(int i = 0;i < 45;i++) {
+				x = i * 2f / (45 - 1) - 1f;
+				slimeVerticesBuffer.put(3 * 2 * i, x); //x
+				slimeVerticesBuffer.put(3 * 2 * i + 1, 1f);					//y
+				slimeVerticesBuffer.put(3 * 2 * i + 2, 0f);					//z
+				
+				x2 = i * 1f / (45 - 1);
+				slimeTexturesBuffer.put(2 * 2 * i, x2);		//x
+				slimeTexturesBuffer.put(2 * 2 * i + 1, 1 - 0);				//y
+				
+				slimeVerticesBuffer.put(3 * (2 * i + 1), i * 2f / (45 - 1) - 1f);
+				slimeVerticesBuffer.put(3 * (2 * i + 1) + 1, (float)(-1f + 1 - tanAngle + (x + 1) * tanAngle));
+				slimeVerticesBuffer.put(3 * (2 * i + 1) + 2, 0f);
+				
+				slimeTexturesBuffer.put(2 * (2 * i + 1), i * 1f / (45 - 1));
+				slimeTexturesBuffer.put(2 * (2 * i + 1) + 1, 1 - (1 - (float)((1 - tanAngle) / 2.0 + x2 * tanAngle)));
+			}
+		}
+		
+		
 		void test(int inx, float j) {
 //			cube3VerticesBuffer.put(inx * 2 * 3 + 1, 1f + j / 100f);
 //			cube3VerticesBuffer.put((inx * 2 + 1) * 3 + 1, -1f + j / 100f);
@@ -560,7 +572,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			{
 				// 加载位图
 				bitmaps[0] = BitmapFactory.decodeResource(context.getResources(),
-						R.drawable.foam);
+						R.drawable.slime);
 				bitmaps[1] = BitmapFactory.decodeResource(context.getResources(),
 						R.drawable.lager);
 				
