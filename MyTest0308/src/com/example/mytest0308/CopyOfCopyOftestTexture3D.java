@@ -223,8 +223,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				-1f, 1f, 0f,
 				-1f, -1f, 0f		
 		};
-		private float[] cube3Vertices = new float[45 * 2 * 3];
-		private float[] cube3Textures = new float[45 * 2 * 2];
+		private float[] foamVertices = new float[45 * 2 * 3];
+		private float[] foamTextures = new float[45 * 2 * 2];
 		private float[] bubbleVertices = { 
 				0.1f, 0.1f, 0f,
 				0.1f, -0.1f, 0f,
@@ -248,9 +248,9 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				
 		};
 		private Context context;
-		private FloatBuffer cubeVerticesBuffer, cube2VerticesBuffer, cube3VerticesBuffer, bubbleVerticesBuffer;
+		private FloatBuffer cubeVerticesBuffer, cube2VerticesBuffer, foamVerticesBuffer, bubbleVerticesBuffer;
 		private ByteBuffer cubeFacetsBuffer;
-		private FloatBuffer cubeTexturesBuffer, cube2TexturesBuffer, cube3TexturesBuffer, bubbleTexturesBuffer;
+		private FloatBuffer cubeTexturesBuffer, cube2TexturesBuffer, foamTexturesBuffer, bubbleTexturesBuffer;
 		// 定义本程序所使用的纹理
 		private int texture;
 		private int[] angleInt = new int[45];
@@ -269,23 +269,23 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			// 将立方体的纹理贴图的座标数据包装成FloatBuffer
 			cubeTexturesBuffer = BufferIntUtil.getToFloatBuffer(cube1Textures);
 			
-			cube3VerticesBuffer = BufferIntUtil.getToFloatBuffer(cube3Vertices);
-			cube3TexturesBuffer = BufferIntUtil.getToFloatBuffer(cube3Textures);
+			foamVerticesBuffer = BufferIntUtil.getToFloatBuffer(foamVertices);
+			foamTexturesBuffer = BufferIntUtil.getToFloatBuffer(foamTextures);
 			
 			for(int i = 0;i < 45;i++) {
-				cube3VerticesBuffer.put(3 * 2 * i, i * 2f / (45 - 1) - 1f);
-				cube3VerticesBuffer.put(3 * 2 * i + 1, 1f);
-				cube3VerticesBuffer.put(3 * 2 * i + 2, 0f);
+				foamVerticesBuffer.put(3 * 2 * i, i * 2f / (45 - 1) - 1f);
+				foamVerticesBuffer.put(3 * 2 * i + 1, 1f);
+				foamVerticesBuffer.put(3 * 2 * i + 2, 0f);
 				
-				cube3TexturesBuffer.put(2 * 2 * i, i * 1f / (45 - 1));
-				cube3TexturesBuffer.put(2 * 2 * i + 1, 0f);
+				foamTexturesBuffer.put(2 * 2 * i, i * 1f / (45 - 1));
+				foamTexturesBuffer.put(2 * 2 * i + 1, 0f);
 				
-				cube3VerticesBuffer.put(3 * (2 * i + 1), i * 2f / (45 - 1) - 1f);
-				cube3VerticesBuffer.put(3 * (2 * i + 1) + 1, -1f);
-				cube3VerticesBuffer.put(3 * (2 * i + 1) + 2, 0f);
+				foamVerticesBuffer.put(3 * (2 * i + 1), i * 2f / (45 - 1) - 1f);
+				foamVerticesBuffer.put(3 * (2 * i + 1) + 1, -1f);
+				foamVerticesBuffer.put(3 * (2 * i + 1) + 2, 0f);
 				
-				cube3TexturesBuffer.put(2 * (2 * i + 1), i * 1f / (45 - 1));
-				cube3TexturesBuffer.put(2 * (2 * i + 1) + 1, 1f);
+				foamTexturesBuffer.put(2 * (2 * i + 1), i * 1f / (45 - 1));
+				foamTexturesBuffer.put(2 * (2 * i + 1) + 1, 1f);
 			}
 			for(int i = 0;i < 45;i++){
 				angleInt[i] = 0;
@@ -449,14 +449,14 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				
 			}
 			// 设置顶点的位置数据
-			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, cube3VerticesBuffer);
+			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, foamVerticesBuffer);
 			// 设置贴图的的座标数据
 //			gl.glScalef(3f, 1f, 1f);
 			// 旋转图形
 			
 //			gl.glScalef(1f, xx, 1f);
 			// 执行纹理贴图
-			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, cube3TexturesBuffer);
+			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, foamTexturesBuffer);
 			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[(int)(p + 0.5f)]);
 			
 			// 按cubeFacetsBuffer指定的面绘制三角形
@@ -501,11 +501,11 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				range[inx] *= 0.7f;
 			}
 			if(j / 10 == 0) {
-				cube3VerticesBuffer.put(inx * 2 * 3 + 1, 1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
-				cube3VerticesBuffer.put((inx * 2 + 1) * 3 + 1, -1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
+				foamVerticesBuffer.put(inx * 2 * 3 + 1, 1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
+				foamVerticesBuffer.put((inx * 2 + 1) * 3 + 1, -1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
 			} else {
-				cube3VerticesBuffer.put(inx * 2 * 3 + 1, 1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
-				cube3VerticesBuffer.put((inx * 2 + 1) * 3 + 1, -1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
+				foamVerticesBuffer.put(inx * 2 * 3 + 1, 1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
+				foamVerticesBuffer.put((inx * 2 + 1) * 3 + 1, -1f + range[inx] * (float)Math.sin(j * 90 / 5.0 * Math.PI / 180.0) / 10f);
 			}
 		}
 		int[] textures;
