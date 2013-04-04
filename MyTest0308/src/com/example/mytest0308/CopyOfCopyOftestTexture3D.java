@@ -138,7 +138,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	        		currentAngle = -70f;
 	        	}
 	        	
-//	        	Log.i("test", "acceleX=" + accelerationX + "  acceleY=" + accelerationY + "   DiffX=" + accelDiffX + "  DiffY=" + accelDiffY);
+	        	Log.i("test", "acceleX=" + accelerationX + "  acceleY=" + accelerationY + "   DiffX=" + accelDiffX + "  DiffY=" + accelDiffY);
 //	        	Log.i("test", "accelDiffX=" + accelDiffX + "  accelDiffY=" + accelDiffY);
 //	        	Log.i("test", "" + currentAngle);
 	        }
@@ -416,7 +416,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		public void onDrawFrame(GL10 gl)
 		{
 			//倒水
-			if(Math.abs(beer.getAccelX()) > 6) {
+			if(currentAngle >= 70) {
 				currentBeerHeight -= 0.05;
 			}
 			// 清除屏幕缓存和深度缓存
