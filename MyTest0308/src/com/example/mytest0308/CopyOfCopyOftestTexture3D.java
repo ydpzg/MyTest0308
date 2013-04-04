@@ -28,16 +28,6 @@ import android.view.GestureDetector;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
 
-/**
- * Description:
- * <br/>site: <a href="http://www.crazyit.org">crazyit.org</a> 
- * <br/>Copyright (C), 2001-2012, Yeeku.H.Lee
- * <br/>This program is protected by copyright laws.
- * <br/>Program Name:
- * <br/>Date:
- * @author  Yeeku.H.Lee kongyeeku@163.com
- * @version  1.0
- */
 public class CopyOfCopyOftestTexture3D extends Activity
 	implements OnGestureListener
 {
@@ -60,8 +50,9 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	private float acceLastX, acceLastY;
 	private float tempRange = 0;
 	
-	private float currentBeerHeight = 2;
+	private float currentBeerHeight = -2f;
 	private boolean foamShakeUp = false;
+	private boolean bottonBroken = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -97,6 +88,9 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	        	if(Math.abs(accelerationX - acceLastX) > 0.1f) {
 	        		float temp = Math.abs(accelerationX - acceLastX) / (curTime - lastTime) * 50f;
 	        		//超过一定程度波浪往上变大
+	        		if(Math.abs(accelerationX - acceLastX) > 1f) {
+	        			bottonBroken = true;
+	        		}
 	        		if(Math.abs(accelerationX - acceLastX) > 0.5f) {
 	        			foamShakeUp = true;
 	        		}
@@ -118,8 +112,10 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	          
 	        	accelDiffY = (paramSensorEvent.values[1] - (0.1F * paramSensorEvent.values[1] + 0.9F * accelDiffY));
 	        	boolean bool = false;
-	        	if (accelerationY * accelerationY - paramSensorEvent.values[1] * paramSensorEvent.values[1] > 10.550000000000001D)
+	        	if (accelerationY * accelerationY - paramSensorEvent.values[1] * paramSensorEvent.values[1] > 10.550000000000001D) {
 	        		bool = true;
+	        		Log.i("ping", accelerationY * accelerationY - paramSensorEvent.values[1] * paramSensorEvent.values[1] + "");
+	        	}
 	         
 	        	if (beerReady)
 	        	{
@@ -288,6 +284,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		private Random bubbleRandom = new Random();
 		
 		private boolean firstDraw = true;
+		private int state = 0;
 		
 		public MyRenderer(Context main)
 		{
@@ -415,8 +412,20 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		
 		public void onDrawFrame(GL10 gl)
 		{
-			//倒水
-			if(currentAngle >= 70) {
+			if(bottonBroken) {
+				state = 2;
+			}
+			if(state == 0) {
+				if(2f - currentBeerHeight < 0.01f) {
+					state = 1;
+				}
+				currentBeerHeight += 0.05f;
+			} else if(state == 1) {
+				//倒水
+				if(currentAngle >= 70) {
+					currentBeerHeight -= 0.05;
+				}
+			} else if(state == 2) {
 				currentBeerHeight -= 0.05;
 			}
 			// 清除屏幕缓存和深度缓存
@@ -435,7 +444,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			// --------------------绘制前先把视角往屏幕里推---------------------
 			gl.glLoadIdentity();
 			// 把绘图中心移入屏幕2个单位
-			gl.glTranslatef(0f, 0.0f, -3.0f);
+			gl.glTranslatef(0f, 0.0f, -3.0f); 
+			
 			//------------------------啤酒背景---------------------------------------
 			gl.glPushMatrix();
 			gl.glTranslatef(0f, 0f, 0f);
@@ -506,23 +516,21 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, slimeVerticesBuffer);
 			// 执行纹理贴图
 			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, slimeTexturesBuffer);
-			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+			if(state == 0) {
+				gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[69]);
+			} else if(state == 1 || state == 2) {
+				gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[0]);
+				
+			}
 			
 			gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 45 * 2);
-			gl.glPopMatrix();
-			//----------------------------泡泡----------------------------------------
-			gl.glPushMatrix();
-//			for(int i = 0;i < 8;i ++) {
-//				bubbles[i].draw(gl);
-//				bubbles[i].move();
-//			}
 			gl.glPopMatrix();
 			//--------------------------前景波浪-----------------------------------------------
 			gl.glPushMatrix();
 			gl.glTranslatef(0f, 0f + currentBeerHeight, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
 			gl.glRotatef(currentAngle, 0f, 0f, 1f);
-			if(foamShakeUp) {
+			if(foamShakeUp && state == 1) {
 				foamShakeUp = false;
 				foamUpChange = true;
 				Log.i("iii", "foamShakeUp=" + foamShakeUp);
@@ -567,6 +575,18 @@ public class CopyOfCopyOftestTexture3D extends Activity
 //				GL10.GL_UNSIGNED_BYTE, cubeFacetsBuffer);
 			gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 45 * 2);
 			gl.glPopMatrix();
+			//------------------------瓶破背景---------------------------------------
+			if(state == 2) {
+				gl.glPushMatrix();
+				// 设置顶点的位置数据
+				gl.glVertexPointer(3, GL10.GL_FLOAT, 0, cube2VerticesBuffer);
+				// 设置贴图的的座标数据
+				gl.glScalef(ratio * 3f, 3f, 1f);
+				gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, cubeTexturesBuffer);
+				gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[70]);
+				gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+				gl.glPopMatrix();
+			}
 			//-----------------------------------------------------------------
 			// 绘制结束
 			gl.glFinish();
@@ -632,8 +652,6 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			}
 		}
 		int[] textures;
-		Bitmap[] bitmaps;
-		Bubble[] bubbles;
 		void putAWaveSor(int j, float range) {
 			if(j >= 0 && j <= 44) {
 				if(powerWavesList.size() < 10) {
@@ -678,173 +696,54 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		}
 		private void loadTexture(GL10 gl)
 		{
-			bitmaps = new Bitmap[69];
 			try
 			{
-				// 加载位图
-				bitmaps[0] = BitmapFactory.decodeResource(context.getResources(),
-						R.drawable.slime);
-				bitmaps[1] = BitmapFactory.decodeResource(context.getResources(),
-						R.drawable.lager);
-				
-				textures = new int[69];
+				textures = new int[71];
 				// 指定生成N个纹理（第一个参数指定生成1个纹理），
 				// textures数组将负责存储所有纹理的代号。
-				gl.glGenTextures(69, textures, 0);
+				gl.glGenTextures(71, textures, 0);
 				// 获取textures纹理数组中的第一个纹理
-				texture = textures[0];
-				// 通知OpenGL将texture纹理绑定到GL10.GL_TEXTURE_2D目标中
 				
-				for(int i = 0;i < 2;i ++) {
-					// 加载位图生成纹理
-					gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[i]);
-					GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmaps[i], 0);
-					gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER,  
-						GL10.GL_NEAREST);   
-					gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,  
-						GL10.GL_NEAREST); 
-					// 设置纹理被缩小（距离视点很远时被缩小）时候的滤波方式
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D,
-						GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-					// 设置纹理被放大（距离视点很近时被方法）时候的滤波方式
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D,
-						GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-					// 设置在横向、纵向上都是平铺纹理
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S,
-						GL10.GL_REPEAT);
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T,
-						GL10.GL_REPEAT);
-				}
+				loadBitmap(gl, R.drawable.slime, textures[0]);
+				loadBitmap(gl, R.drawable.lager, textures[1]);
 				for(int i = 2;i < 68;i ++) {
 					// 加载位图生成纹理
-					bitmaps[i] = BitmapFactory.decodeResource(context.getResources(),
-							2130837505 + i - 2);
-					gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[i]);
-					GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmaps[i], 0);
-					gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER,  
-							GL10.GL_NEAREST);   
-					gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,  
-							GL10.GL_NEAREST); 
-					// 设置纹理被缩小（距离视点很远时被缩小）时候的滤波方式
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D,
-							GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-					// 设置纹理被放大（距离视点很近时被方法）时候的滤波方式
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D,
-							GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-					// 设置在横向、纵向上都是平铺纹理
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S,
-							GL10.GL_REPEAT);
-					gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T,
-							GL10.GL_REPEAT);
-					gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE,  
-				                GL10.GL_REPLACE);  
-
-					if (bitmaps[i] != null) {
-						bitmaps[i].recycle();
-					}
-					
+					loadBitmap(gl, 2130837507 + i - 2, textures[i]);
 				}
 				// 加载位图生成纹理
-				bitmaps[68] = BitmapFactory.decodeResource(context.getResources(),
-						R.drawable.bubble32);
-				gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[68]);
-				GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmaps[68], 0);
-				gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER,  
-						GL10.GL_NEAREST);   
-				gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,  
-						GL10.GL_NEAREST); 
-				// 设置纹理被缩小（距离视点很远时被缩小）时候的滤波方式
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D,
-						GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
-				// 设置纹理被放大（距离视点很近时被方法）时候的滤波方式
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D,
-						GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
-				// 设置在横向、纵向上都是平铺纹理
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S,
-						GL10.GL_REPEAT);
-				gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T,
-						GL10.GL_REPEAT);
-				gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE,  
-			                GL10.GL_REPLACE); 
-				if (bitmaps[68] != null) {
-					bitmaps[68].recycle();
-				}
-				
-				bubbles = new Bubble[8];
-				for(int i = 0;i < 8;i ++) {
-					float x = (random.nextInt(8) - 4) / 2.0f;
-					float y = (random.nextInt(10) - 25) / 10.0f;
-					bubbles[i] = new Bubble(0, 0, x, y);
-				}
-				
+				loadBitmap(gl, R.drawable.bubble32, textures[68]);
+				loadBitmap(gl, R.drawable.black_tex, textures[69]);
+				loadBitmap(gl, R.drawable.egg, textures[70]);
 			}
 			finally
 			{
-				// 生成纹理之后，回收位图
-				for(int i = 0;i < 2;i ++) {
-					if (bitmaps[i] != null) {
-						bitmaps[i].recycle();
-					}
-				}
 			}
 		}
-		Bubble bubble;
-		Random random = new Random();
-
-
-		class Bubble {
-			float x0, y0, x, y;
-			int temp;
-			boolean canRunning = true;
-			public Bubble(float x0, float y0, float x, float y) {
-				// TODO Auto-generated constructor stub
-				this.x0 = x0;
-				this.y0 = y0;
-				this.x = x;
-				this.y = y;
+		void loadBitmap(GL10 gl, int resId, int textureId) {
+			Bitmap bitmap = BitmapFactory.decodeResource(context.getResources(), resId);
+			gl.glBindTexture(GL10.GL_TEXTURE_2D, textureId);
+			GLUtils.texImage2D(GL10.GL_TEXTURE_2D, 0, bitmap, 0);
+			gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MAG_FILTER,  
+					GL10.GL_NEAREST);   
+			gl.glTexParameterx(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_MIN_FILTER,  
+					GL10.GL_NEAREST); 
+			// 设置纹理被缩小（距离视点很远时被缩小）时候的滤波方式
+			gl.glTexParameterf(GL10.GL_TEXTURE_2D,
+					GL10.GL_TEXTURE_MIN_FILTER, GL10.GL_NEAREST);
+			// 设置纹理被放大（距离视点很近时被方法）时候的滤波方式
+			gl.glTexParameterf(GL10.GL_TEXTURE_2D,
+					GL10.GL_TEXTURE_MAG_FILTER, GL10.GL_LINEAR);
+			// 设置在横向、纵向上都是平铺纹理
+			gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_S,
+					GL10.GL_REPEAT);
+			gl.glTexParameterf(GL10.GL_TEXTURE_2D, GL10.GL_TEXTURE_WRAP_T,
+					GL10.GL_REPEAT);
+			gl.glTexEnvf(GL10.GL_TEXTURE_ENV, GL10.GL_TEXTURE_ENV_MODE,  
+		                GL10.GL_REPLACE); 
+			if (bitmap != null) {
+				bitmap.recycle();
 			}
-			void draw(GL10 gl) {
-//				gl.glLoadIdentity();
-//				// 把绘图中心移入屏幕2个单位
-				gl.glPushMatrix();
-				gl.glTranslatef(x, y, 0);
-				gl.glVertexPointer(3, GL10.GL_FLOAT, 0, bubbleVerticesBuffer);
-				// 执行纹理贴图
-				gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, bubbleTexturesBuffer);
-				gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[68]);
-				
-				gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
-				gl.glPopMatrix();
-			    
-			}
-			public void move() {
-				if(canRunning) {
-					y += 0.06f;
-				} else {
-					//让泡泡随机固定一段时间
-					temp = random.nextInt(4);
-					if(temp == 0) {
-						canRunning = true;
-					}
-				}
-				if(y > 0.5) {
-					//y = random(一个范围)
-//					y = -2.0f;
-					temp = random.nextInt(3);
-					
-					if(temp == 0) {
-						x = (random.nextInt(8) - 4) / 2.0f;
-						y = (random.nextInt(10) - 25) / 10.0f;
-						canRunning = false;
-					} else {
-						y = 100;
-					}
-				}
-			}
-			private void setX0Y0(float x0, float y0) {
-				this.x0 = x0;
-				this.y0 = y0;
-			}
+			
 		}
 		class PowerWave {
 			int inx;
