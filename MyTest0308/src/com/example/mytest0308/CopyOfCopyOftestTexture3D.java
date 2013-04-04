@@ -61,7 +61,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	private float tempRange = 0;
 	
 	private float currentBeerHeight = 2;
-	
+	private boolean foamShakeUp = false;
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState)
@@ -96,6 +96,10 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	        	curTime = System.currentTimeMillis();
 	        	if(Math.abs(accelerationX - acceLastX) > 0.1f) {
 	        		float temp = Math.abs(accelerationX - acceLastX) / (curTime - lastTime) * 50f;
+	        		//超过一定程度波浪往上变大
+	        		if(Math.abs(accelerationX - acceLastX) > 0.5f) {
+	        			foamShakeUp = true;
+	        		}
 	        		if(temp > 1) {
 	        			temp = 1;
 	        		}
@@ -126,9 +130,17 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	        		beer.setShakeFlag(bool);
 	        	}
 	        	currentAngle = (3.5F + (float)(57.295780000000001D * StrictMath.atan2(beer.getAccelY(), beer.getAccelX()) - 90.0D));
+	        	if(currentAngle > 70) {
+	        		currentAngle = 70f;
+	        	} else if(currentAngle < -200) {
+	        		currentAngle = 70f;
+	        	} else if(currentAngle < -70) {
+	        		currentAngle = -70f;
+	        	}
+	        	
 //	        	Log.i("test", "acceleX=" + accelerationX + "  acceleY=" + accelerationY + "   DiffX=" + accelDiffX + "  DiffY=" + accelDiffY);
 //	        	Log.i("test", "accelDiffX=" + accelDiffX + "  accelDiffY=" + accelDiffY);
-	        	Log.i("test", "" + currentAngle);
+//	        	Log.i("test", "" + currentAngle);
 	        }
 	    };
 	      
@@ -267,6 +279,13 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		private boolean[] canMove = new boolean[45];
 		private int inx = 0;
 		private ArrayList<PowerWave> powerWavesList = new ArrayList<PowerWave>();
+		private float[] mBubbleListX = new float[200];
+		private float[] mBubbleListY = new float[200];
+		private float[] mBubbleListAccX = new float[200];
+		private float[] mBubbleListAccY = new float[200];
+		private float[] mBubbleListAge = new float[200];
+		private int mBubbleMaxAge = 8;
+		private Random bubbleRandom = new Random();
 		
 		private boolean firstDraw = true;
 		
@@ -328,7 +347,11 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			bubbleVerticesBuffer = BufferIntUtil.getToFloatBuffer(bubbleVertices);
 			bubbleTexturesBuffer = BufferIntUtil.getToFloatBuffer(bubbleTextures);
 			
-			
+			for(int i = 0;i < 20;i++) {
+				mBubbleListAccX[i] = 0.02f;
+				mBubbleListAccY[i] = 0.12f;
+				mBubbleListAge[i] = 0;
+			}
 		}
 
 		@Override
@@ -355,7 +378,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		    gl.glEnable(GL10.GL_DEPTH_TEST);  
 		    gl.glEnable(GL10.GL_ALPHA_TEST);  // Enable Alpha Testing (To Make BlackTansparent)   
 		  
-		    gl.glAlphaFunc(GL10.GL_GREATER,0.1f);  // Set Alpha Testing (To Make Black Transparent)   
+		    gl.glAlphaFunc(GL10.GL_GREATER, 0.1f);  // Set Alpha Testing (To Make Black Transparent)   
 		  
 		    // Smooth shading   
 		    gl.glShadeModel(GL10.GL_SMOOTH);  
@@ -375,18 +398,26 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glLoadIdentity();
 			// 计算透视视窗的宽度、高度比
 			ratio = (float) width / height;
+//			ratio = 240 * (float) width / height;
 			
 			// 调用此方法设置透视视窗的空间大小。
 			gl.glFrustumf(-ratio, ratio, -1, 1, 1, 10);
+//			gl.glOrthof(-this.ratio, this.ratio, -240.0F, 240.0F,
+//					-8.5F, 8.5F);
 		}
 		private float xx = 1.0f;
 		private float inc = 0.01f;
 		private float incP = 0.25f;
 		private float p = 3.0f;
+		private boolean foamUpChange = false;
+		private boolean foamDownChange = false;
+		private float upScanleHeight = 0;
+		
 		public void onDrawFrame(GL10 gl)
 		{
+			//倒水
 			if(Math.abs(beer.getAccelX()) > 6) {
-				currentBeerHeight -= 0.02;
+				currentBeerHeight -= 0.05;
 			}
 			// 清除屏幕缓存和深度缓存
 			gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
@@ -424,6 +455,46 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
 			
 			gl.glPopMatrix();
+			//-----------------------------泡泡-------------------------------------
+			gl.glPushMatrix();
+			gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_DST_COLOR);
+			gl.glColor4f(1f, 1f, 1f, 0.5f);   // 全亮度， 50% Alpha 混合
+			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, bubbleVerticesBuffer);
+			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, bubbleTexturesBuffer);
+			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[68]);
+			float tempScal = 1f;
+			
+			for(int i = 0;i < 20;i++) {
+				gl.glPushMatrix();
+				gl.glScalef(0.6f, 0.6f, 1f);
+				tempScal = (mBubbleListAge[i] / (float)mBubbleMaxAge);
+				if(mBubbleListAge[i] == 0) {
+					mBubbleListAge[i]++;
+					mBubbleListX[i] = bubbleRandom.nextInt(100) / 20f - 2.5f;
+					mBubbleListY[i] = bubbleRandom.nextInt(200) / 20f - 5f;
+					mBubbleListAccX[i] = 0.02f;
+					mBubbleListAccY[i] = 0.08f;
+				} else if(mBubbleListAge[i] < mBubbleMaxAge - 1) {
+					mBubbleListAge[i]++;
+				} else if(mBubbleListAge[i] == mBubbleMaxAge - 1) {
+					mBubbleListAge[i]++;
+					tempScal = 1f;
+				} else if(mBubbleListAge[i] == mBubbleMaxAge) {
+				
+					mBubbleListX[i] += mBubbleListAccX[i];
+					mBubbleListY[i] += mBubbleListAccY[i];
+					mBubbleListAccY[i] += 0.005f;
+					if(mBubbleListY[i] > 5) {
+						mBubbleListAge[i] = 0;
+					}
+				}
+				gl.glTranslatef(mBubbleListX[i], mBubbleListY[i], 0f);
+				gl.glScalef(tempScal, tempScal, 1f);
+				gl.glDrawArrays(GL10.GL_TRIANGLE_STRIP, 0, 4);
+				gl.glPopMatrix();
+			}
+			gl.glBlendFunc(GL10.GL_SRC_ALPHA, GL10.GL_ONE_MINUS_SRC_ALPHA); 
+			gl.glPopMatrix();
 			//--------------------------背景泡沫-----------------------------------------------
 			gl.glPushMatrix();
 			gl.glTranslatef(0f, 0f, -0.0f);
@@ -451,7 +522,34 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glTranslatef(0f, 0f + currentBeerHeight, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
 			gl.glRotatef(currentAngle, 0f, 0f, 1f);
-			gl.glScalef(6f, 1f, 1f);
+			if(foamShakeUp) {
+				foamShakeUp = false;
+				foamUpChange = true;
+				Log.i("iii", "foamShakeUp=" + foamShakeUp);
+			}
+			if(foamUpChange) {
+				if(upScanleHeight < 0.6f) {
+					upScanleHeight += 0.1f;
+					if(upScanleHeight > 2) {
+						upScanleHeight = 2;
+					}
+				} else {
+					foamDownChange = true;
+					foamUpChange = false;
+				}
+				Log.i("iii", "up=" + upScanleHeight);
+			} else if(foamDownChange) {
+				if(upScanleHeight > 0) {
+					upScanleHeight -= 0.02f;
+					if(upScanleHeight < 0) {
+						upScanleHeight = 0;
+					}
+				} else {
+					foamDownChange = false;
+				}
+				Log.i("iii", "down=" + upScanleHeight);
+			}
+			gl.glScalef(6f, 1f + upScanleHeight, 1f);
 
 			freshWave();
 			if(downHand) {
