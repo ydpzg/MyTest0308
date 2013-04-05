@@ -9,6 +9,7 @@ import java.util.Random;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
+import android.R.integer;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -134,9 +135,9 @@ public class CopyOfCopyOftestTexture3D extends Activity
 	        		currentAngle = -70f;
 	        	}
 	        	
-	        	Log.i("test", "acceleX=" + accelerationX + "  acceleY=" + accelerationY + "   DiffX=" + accelDiffX + "  DiffY=" + accelDiffY);
+//	        	Log.i("test", "acceleX=" + accelerationX + "  acceleY=" + accelerationY + "   DiffX=" + accelDiffX + "  DiffY=" + accelDiffY);
 //	        	Log.i("test", "accelDiffX=" + accelDiffX + "  accelDiffY=" + accelDiffY);
-//	        	Log.i("test", "" + currentAngle);
+	        	Log.i("test", "" + currentAngle);
 	        }
 	    };
 	      
@@ -404,11 +405,13 @@ public class CopyOfCopyOftestTexture3D extends Activity
 		}
 		private float xx = 1.0f;
 		private float inc = 0.01f;
-		private float incP = 0.25f;
-		private float p = 3.0f;
+		private float incCurrTime = 0.25f;
+		private float currTime = 3.0f;
 		private boolean foamUpChange = false;
 		private boolean foamDownChange = false;
-		private float upScanleHeight = 0;
+		private int upScaleCount = 0;
+		private float currTimeMax = 67f;
+		private float currTimeMin = 58f;
 		
 		public void onDrawFrame(GL10 gl)
 		{
@@ -422,11 +425,11 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				currentBeerHeight += 0.05f;
 			} else if(state == 1) {
 				//倒水
-				if(currentAngle >= 70) {
-					currentBeerHeight -= 0.05;
+				if(Math.abs(currentAngle) >= 60) {
+					currentBeerHeight -= 0.05f;
 				}
 			} else if(state == 2) {
-				currentBeerHeight -= 0.05;
+				currentBeerHeight -= 0.05f;
 			}
 			// 清除屏幕缓存和深度缓存
 			gl.glClear(GL10.GL_COLOR_BUFFER_BIT | GL10.GL_DEPTH_BUFFER_BIT);
@@ -474,7 +477,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[68]);
 			float tempScal = 1f;
 			
-			for(int i = 0;i < 20;i++) {
+			for(int i = 0;i < 30;i++) {
 				gl.glPushMatrix();
 				gl.glScalef(0.6f, 0.6f, 1f);
 				tempScal = (mBubbleListAge[i] / (float)mBubbleMaxAge);
@@ -482,8 +485,8 @@ public class CopyOfCopyOftestTexture3D extends Activity
 					mBubbleListAge[i]++;
 					mBubbleListX[i] = bubbleRandom.nextInt(100) / 20f - 2.5f;
 					mBubbleListY[i] = bubbleRandom.nextInt(200) / 20f - 5f;
-					mBubbleListAccX[i] = 0.02f;
-					mBubbleListAccY[i] = 0.08f;
+					mBubbleListAccX[i] = 0f;
+					mBubbleListAccY[i] = 0f;
 				} else if(mBubbleListAge[i] < mBubbleMaxAge - 1) {
 					mBubbleListAge[i]++;
 				} else if(mBubbleListAge[i] == mBubbleMaxAge - 1) {
@@ -493,7 +496,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				
 					mBubbleListX[i] += mBubbleListAccX[i];
 					mBubbleListY[i] += mBubbleListAccY[i];
-					mBubbleListAccY[i] += 0.005f;
+					mBubbleListAccY[i] += 0.006f;
 					if(mBubbleListY[i] > 5) {
 						mBubbleListAge[i] = 0;
 					}
@@ -509,7 +512,10 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glPushMatrix();
 			gl.glTranslatef(0f, 0f, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
+			gl.glTranslatef(0f, -Math.abs(currentAngle) / 150f, 0F);
 			gl.glScalef(ratio * 5, 5f, 1f);
+			gl.glRotatef(currentAngle / 30f, 0.0F, 0.0F, 1.0F);
+
 //			gl.glScalef(ratio, 1f, 1f);
 			changeSlimeVertives();
 			// 设置顶点的位置数据
@@ -527,37 +533,36 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glPopMatrix();
 			//--------------------------前景波浪-----------------------------------------------
 			gl.glPushMatrix();
-			gl.glTranslatef(0f, 0f + currentBeerHeight, -0.0f);
+			gl.glTranslatef(0f, 0.5f + currentBeerHeight, -0.0f);
 			gl.glColor4f(1f, 1f, 1f, 0f);
 			gl.glRotatef(currentAngle, 0f, 0f, 1f);
 			if(foamShakeUp && state == 1) {
 				foamShakeUp = false;
 				foamUpChange = true;
+				currTimeMax = 67;
+				currTimeMin = 4;
+				currTime = 58;
+				incCurrTime = -3;
 				Log.i("iii", "foamShakeUp=" + foamShakeUp);
 			}
 			if(foamUpChange) {
-				if(upScanleHeight < 0.6f) {
-					upScanleHeight += 0.1f;
-					if(upScanleHeight > 2) {
-						upScanleHeight = 2;
-					}
+				if(upScaleCount < 300) {
+					upScaleCount += 15;
 				} else {
 					foamDownChange = true;
 					foamUpChange = false;
 				}
-				Log.i("iii", "up=" + upScanleHeight);
 			} else if(foamDownChange) {
-				if(upScanleHeight > 0) {
-					upScanleHeight -= 0.02f;
-					if(upScanleHeight < 0) {
-						upScanleHeight = 0;
-					}
+				if(upScaleCount > 0) {
+					upScaleCount -= 2;
 				} else {
 					foamDownChange = false;
+					currTimeMin = 58f;
+					currTimeMax = 67f;
+					incCurrTime = 0.4f;
 				}
-				Log.i("iii", "down=" + upScanleHeight);
 			}
-			gl.glScalef(6f, 1f + upScanleHeight, 1f);
+			gl.glScalef(6f, 1.5f, 1f);
 
 			freshWave();
 			if(downHand) {
@@ -568,8 +573,13 @@ public class CopyOfCopyOftestTexture3D extends Activity
 			gl.glVertexPointer(3, GL10.GL_FLOAT, 0, foamVerticesBuffer);
 			// 执行纹理贴图
 			gl.glTexCoordPointer(2, GL10.GL_FLOAT, 0, foamTexturesBuffer);
-			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[(int)(p + 0.5f)]);
-			
+			gl.glBindTexture(GL10.GL_TEXTURE_2D, textures[(int)(currTime + 0.5f)]);
+			if(currTime >= currTimeMax) {
+				incCurrTime = -0.4f;
+			} else if(currTime <= currTimeMin) {
+				incCurrTime = 0.4f;
+			}
+			currTime += incCurrTime;
 			// 按cubeFacetsBuffer指定的面绘制三角形
 //			gl.glDrawElements(GL10.GL_TRIANGLE_STRIP, 4,
 //				GL10.GL_UNSIGNED_BYTE, cubeFacetsBuffer);
@@ -602,12 +612,7 @@ public class CopyOfCopyOftestTexture3D extends Activity
 				inc = 0.002f;
 			}
 			xx += inc;
-			if(p >= 8.0f) {
-				incP = -0.2f;
-			} else if(p <= 3.0f) {
-				incP = 0.2f;
-			}
-			p += incP;
+			
 		}
 		public void changeSlimeVertives() {
 			float x, y, x2, y2;
